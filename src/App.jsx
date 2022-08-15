@@ -74,11 +74,11 @@ export class App extends Component {
     if (text.value === '') {
       return toastInfo('Строка пустая. Введите что-нибудь');
     }
-    if (text.value === this.state.query) {
+    if (text.value.trim() === this.state.query) {
       return toastInfo('Такой же запрос :)');
     }
     this.setState({
-      query: text.value,
+      query: text.value.trim(),
       page: 1,
       images: [],
       lastPage: false,
