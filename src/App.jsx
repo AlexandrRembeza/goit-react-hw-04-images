@@ -71,7 +71,7 @@ export class App extends Component {
       elements: { text },
     } = e.currentTarget;
 
-    if (text.value === '') {
+    if (text.value.trim() === '') {
       return toastInfo('Строка пустая. Введите что-нибудь');
     }
     if (text.value.trim() === this.state.query) {
