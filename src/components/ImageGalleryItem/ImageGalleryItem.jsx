@@ -1,48 +1,37 @@
 import { GalleryItem, GalleryImage } from './ImageGalleryItem.styled';
 import { Modal } from 'components/Modal';
-import { Component } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 
-export class ImageGalleryItem extends Component {
-  state = {
-    isOpenModal: false,
-    largeImg: '',
-  };
+export const ImageGalleryItem = ({ smallImgLink, tags, largeImgLink }) => {
+  const [isOpenModal, setIsOpenModal] = useState(false);
+  const [largeImg, setLargeImg] = useState('');
 
-  openModal = e => {
+  const openModal = e => {
     if (e.target.nodeName !== 'IMG') {
       return;
     }
     const largeImgLink = e.target.dataset.largeimglink;
-    this.setState({
-      largeImg: largeImgLink,
-      isOpenModal: true,
-    });
+    setIsOpenModal(true);
+    setLargeImg(largeImgLink);
   };
 
-  closeModal = e => {
-    this.setState({ isOpenModal: false });
+  const closeModal = e => {
+    setIsOpenModal(false);
   };
 
-  render() {
-    const { largeImg, isOpenModal } = this.state;
-    const { smallImgLink, tags, largeImgLink } = this.props;
-
-    return (
-      <GalleryItem>
-        <GalleryImage
-          src={smallImgLink}
-          alt={tags}
-          data-largeimglink={largeImgLink}
-          onClick={this.openModal}
-        />
-        {isOpenModal && (
-          <Modal closeModal={this.closeModal} largeImg={largeImg} />
-        )}
-      </GalleryItem>
-    );
-  }
-}
+  return (
+    <GalleryItem>
+      <GalleryImage
+        src={smallImgLink}
+        alt={tags}
+        data-largeimglink={largeImgLink}
+        onClick={openModal}
+      />
+      {isOpenModal && <Modal closeModal={closeModal} largeImg={largeImg} />}
+    </GalleryItem>
+  );
+};
 
 GalleryImage.propTypes = {
   src: PropTypes.string.isRequired,

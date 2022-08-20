@@ -1,7 +1,7 @@
 import { toast } from 'react-toastify';
 
-export function toastInfo(string) {
-  toast.info(string, {
+export function toastInfo(errorMessage) {
+  toast.info(errorMessage, {
     position: 'top-left',
     autoClose: 3000,
     hideProgressBar: false,

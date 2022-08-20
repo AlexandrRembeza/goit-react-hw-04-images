@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useReducer } from 'react';
 import PropTypes from 'prop-types';
 
 import { ToastContainer } from 'react-toastify';
@@ -13,59 +13,73 @@ import { Searchbar } from 'components/Searchbar';
 import { ImageGallery } from 'components/ImageGallery';
 import { Button, ButtonWrap } from 'App.styled';
 
-export class App extends Component {
-  state = {
+const galleryReducer = (state, action) => {
+  switch (action.type) {
+    case 'isLoading':
+      return { ...state, isLoading: true };
+    case 'imagesNotFound':
+      return { ...state, isLoading: false, images: [] };
+    case 'newImages':
+      return { ...state, images: [...state.images, ...action.payload] };
+    case 'lastPage':
+      return { ...state, lastPage: true };
+    case 'newRequest':
+      return {
+        ...state,
+        images: [],
+        page: 1,
+        lastPage: false,
+        query: action.payload,
+      };
+    case 'loadMoreImages':
+      return { ...state, page: state.page + 1 };
+    case 'stopLoading':
+      return { ...state, isLoading: false };
+    default:
+      console.log('Some Error in galleryReducer');
+  }
+};
+
+export const App = () => {
+  const [state, dispatch] = useReducer(galleryReducer, {
     query: '',
     page: 1,
     lastPage: false,
     images: [],
     isLoading: false,
-  };
+  });
 
-  componentDidUpdate(prevProps, prevState) {
-    const { query, page } = this.state;
-
-    if (
-      prevState.query !== this.state.query ||
-      prevState.page !== this.state.page
-    ) {
-      this.setState({ isLoading: true });
-
-      setTimeout(async () => {
-        try {
-          const response = await fetchImages(query, page);
-          const newImages = response.hits;
-
-          // Вывести сообщение если нет ошибки, но нет картинок по запросу
-          if (newImages.length === 0) {
-            this.setState({
-              images: [],
-              isLoading: false,
-            });
-            return toastInfo(`Нету картинок по запросу ${query}`);
-          }
-
-          this.setState(prevState => {
-            return {
-              images: [...prevState.images, ...newImages],
-            };
-          });
-
-          //Вывести сообщение и убрать кнопку, если последняя страница
-          if (Math.ceil(response.total / 8) === page) {
-            this.setState({ lastPage: true });
-            return toastInfo(`Картинок больше нет`);
-          }
-        } catch (error) {
-          return toastError();
-        } finally {
-          this.setState({ isLoading: false });
-        }
-      }, 1000);
+  useEffect(() => {
+    if (!state.query) {
+      return;
     }
-  }
+    dispatch({ type: 'isLoading' });
 
-  handleSubmit = e => {
+    setTimeout(async () => {
+      try {
+        const response = await fetchImages(state.query, state.page);
+        const newImages = response.hits;
+
+        if (newImages.length === 0) {
+          dispatch({ type: 'imagesNotFound' });
+          return toastInfo(`Нету картинок по запросу ${state.query}`);
+        }
+
+        dispatch({ type: 'newImages', payload: newImages });
+
+        if (Math.ceil(response.total / 8) === state.page) {
+          dispatch({ type: 'lastPage' });
+          return toastInfo(`Картинок больше нет`);
+        }
+      } catch (error) {
+        return toastError();
+      } finally {
+        dispatch({ type: 'stopLoading' });
+      }
+    }, 1000);
+  }, [state.query, state.page]);
+
+  const handleSubmit = e => {
     e.preventDefault();
     const {
       elements: { text },
@@ -74,59 +88,45 @@ export class App extends Component {
     if (text.value.trim() === '') {
       return toastInfo('Строка пустая. Введите что-нибудь');
     }
-    if (text.value.trim() === this.state.query) {
+    if (text.value.trim() === state.query) {
       return toastInfo('Такой же запрос :)');
     }
-    this.setState({
-      query: text.value.trim(),
-      page: 1,
-      images: [],
-      lastPage: false,
-    });
+    dispatch({ type: 'newRequest', payload: text.value.trim() });
   };
 
-  handleButtonClick = e => {
-    this.setState(prevState => {
-      return {
-        page: prevState.page + 1,
-      };
-    });
+  const handleButtonClick = e => {
+    dispatch({ type: 'loadMoreImages' });
   };
 
-  render() {
-    const { isLoading, images, lastPage } = this.state;
+  const { isLoading, images, lastPage } = state;
 
-    return (
-      <>
-        <Searchbar handleSubmit={this.handleSubmit} isLoading={isLoading} />
-        {images.length !== 0 ? <ImageGallery images={images} /> : <></>}
-
-        <ButtonWrap>
-          {isLoading ? (
-            // <Loader>Loading...</Loader>
-
-            <Bars
-              height="80"
-              width="80"
-              radius="9"
-              color="#3f51b5"
-              ariaLabel="Bars"
-            />
-          ) : (
-            <Button
-              lastPage={lastPage}
-              images={images.length === 0}
-              onClick={this.handleButtonClick}
-            >
-              Load more
-            </Button>
-          )}
-        </ButtonWrap>
-        <ToastContainer />
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <Searchbar handleSubmit={handleSubmit} isLoading={isLoading} />
+      {images.length !== 0 ? <ImageGallery images={images} /> : <></>}
+      <ButtonWrap>
+        {isLoading ? (
+          <Bars
+            height="80"
+            width="80"
+            radius="9"
+            color="#3f51b5"
+            ariaLabel="Bars"
+          />
+        ) : (
+          <Button
+            lastPage={lastPage}
+            images={images.length === 0}
+            onClick={handleButtonClick}
+          >
+            Load more
+          </Button>
+        )}
+      </ButtonWrap>
+      <ToastContainer />
+    </>
+  );
+};
 
 Searchbar.propTypes = {
   handleSubmit: PropTypes.func.isRequired,
