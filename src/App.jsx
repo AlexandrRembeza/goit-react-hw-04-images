@@ -36,7 +36,7 @@ const galleryReducer = (state, action) => {
     case 'stopLoading':
       return { ...state, isLoading: false };
     default:
-      console.log('Some Error in galleryReducer');
+      return state;
   }
 };
 
@@ -103,7 +103,7 @@ export const App = () => {
   return (
     <>
       <Searchbar handleSubmit={handleSubmit} isLoading={isLoading} />
-      {images.length !== 0 ? <ImageGallery images={images} /> : <></>}
+      {images.length !== 0 && <ImageGallery images={images} />}
       <ButtonWrap>
         {isLoading ? (
           <Bars
