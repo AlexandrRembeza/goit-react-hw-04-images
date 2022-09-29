@@ -15,13 +15,9 @@ export const ImageGallery = ({ images }) => {
     });
   }, [images]);
 
-  const openModal = e => {
-    if (e.target.nodeName !== 'IMG') {
-      return;
-    }
-    const largeImgLink = e.target.dataset.largeimglink;
+  const openModal = largeImageURL => {
     setIsOpenModal(true);
-    setLargeImg(largeImgLink);
+    setLargeImg(largeImageURL);
   };
 
   const closeModal = e => {
@@ -36,9 +32,8 @@ export const ImageGallery = ({ images }) => {
             <ImageGalleryItem
               key={id}
               smallImgLink={webformatURL}
-              largeImgLink={largeImageURL}
               tags={tags}
-              onClick={openModal}
+              onClick={() => openModal(largeImageURL)}
             />
           );
         })}
